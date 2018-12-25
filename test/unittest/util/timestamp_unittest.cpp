@@ -30,6 +30,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/util/timestamp.hpp"
+#include "tablestore/util/random.hpp"
 #include "testa/testa.hpp"
 #include <boost/chrono/chrono.hpp>
 #include <deque>
@@ -39,6 +40,7 @@ using namespace std;
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
 
 void Duration_cons(const string&)
 {
@@ -289,5 +291,79 @@ void UtcTime_now(const string&)
 }
 TESTA_DEF_JUNIT_LIKE1(UtcTime_now);
 
+void UtcTime_parse_0(const string&)
+{
+    string in = "1970-01-01T00:00:00Z";
+    Result<UtcTime, string> tm = UtcTime::parse(MemPiece::from(in));
+    TESTA_ASSERT(tm.ok())
+        (tm.errValue())
+        .issue();
+    TESTA_ASSERT(tm.okValue() == UtcTime::fromSec(0))
+        (tm.okValue())
+        .issue();
+}
+TESTA_DEF_JUNIT_LIKE1(UtcTime_parse_0);
+
+void UtcTime_parse_20181225T010203Z(const string&)
+{
+    string in = "2018-12-25T01:02:03Z";
+    Result<UtcTime, string> tm = UtcTime::parse(MemPiece::from(in));
+    TESTA_ASSERT(tm.ok())
+        (tm.errValue())
+        .issue();
+    TESTA_ASSERT(tm.okValue() == UtcTime::fromSec(1545699723))
+        (tm.okValue())
+        (UtcTime::fromSec(1545699723))
+        .issue();
+}
+TESTA_DEF_JUNIT_LIKE1(UtcTime_parse_20181225T010203Z);
+
+void UtcTime_parse_usec(const string&)
+{
+    string in = "1970-01-01T00:00:00.123456Z";
+    Result<UtcTime, string> tm = UtcTime::parse(MemPiece::from(in));
+    TESTA_ASSERT(tm.ok())
+        (tm.errValue())
+        .issue();
+    TESTA_ASSERT(tm.okValue() == UtcTime::fromUsec(123456))
+        (tm.okValue())
+        .issue();
+}
+TESTA_DEF_JUNIT_LIKE1(UtcTime_parse_usec);
+
+void UtcTime_parse_msec(const string&)
+{
+    string in = "1970-01-01T00:00:00.123Z";
+    Result<UtcTime, string> tm = UtcTime::parse(MemPiece::from(in));
+    TESTA_ASSERT(tm.ok())
+        (tm.errValue())
+        .issue();
+    TESTA_ASSERT(tm.okValue() == UtcTime::fromMsec(123))
+        (tm.okValue())
+        .issue();
+}
+TESTA_DEF_JUNIT_LIKE1(UtcTime_parse_msec);
+
+void UtcTime_parse_random(const string&)
+{
+    auto_ptr<Random> rng(random::newDefault(57));
+    for(int64_t repeat = 10000; repeat > 0; --repeat) {
+        int64_t usec = random::nextInt(*rng, 0x57dc6b065a000LL);
+        UtcTime oracle = UtcTime::fromUsec(usec);
+        string iso = oracle.toIso8601();
+        Result<UtcTime, string> trial = UtcTime::parse(MemPiece::from(iso));
+        TESTA_ASSERT(trial.ok())
+            (trial.errValue())
+            .issue();
+        TESTA_ASSERT(trial.okValue() == oracle)
+            (usec)
+            (oracle)
+            (trial.okValue())
+            .issue();
+    }
+}
+TESTA_DEF_JUNIT_LIKE1(UtcTime_parse_random);
+
+} // namespace util
 } // namespace tablestore
 } // namespace aliyun

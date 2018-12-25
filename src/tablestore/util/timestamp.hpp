@@ -32,6 +32,8 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include "tablestore/util/result.hpp"
+#include "tablestore/util/mempiece.hpp"
 #include "tablestore/util/move.hpp"
 #include "tablestore/util/assert.hpp"
 #include <string>
@@ -371,6 +373,8 @@ public:
 
     static UtcTime now();
 
+    static Result<UtcTime, std::string> parse(const MemPiece&);
+
     Duration operator-(const UtcTime& ano) const throw()
     {
         int64_t result = mValue - ano.mValue;
@@ -437,7 +441,7 @@ inline UtcTime operator+(Duration delta, UtcTime base) throw()
     return base + delta;
 }
 
-} // namespace core
+} // namespace util
 } // namespace tablestore
 } // namespace aliyun
 #endif
